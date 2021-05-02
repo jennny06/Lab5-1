@@ -1,16 +1,162 @@
 // script.js
 
 const img = new Image(); // used to load image from <input> and draw to canvas
+const canvas = document.getElementById('user-image');
+const ctx = canvas.getContext('2d'); 
+const img_in = document.getElementById('image-input');
+
+const form = document.getElementById('generate-meme');
+
+
+const submit = document.getElementsByTagName('button')[0]
+const clear = document.getElementsByTagName('button')[1]
+const read = document.getElementsByTagName('button')[2]
+
+const topT = document.getElementById('text-top');
+const botT = document.getElementById('text-bottom');
+
+const vol_group = document.getElementById('volume-group');
+
+var synth = window.speechSynthesis;
+var voiceSelect = document.getElementById('voice-selection');
+
+var voices = [];
+var vol = 100;
+var myvoice;
+
+function populateVoiceList() {
+  if(typeof speechSynthesis === 'undefined') {
+    return;
+  }
+
+  voices = speechSynthesis.getVoices();
+  voiceSelect.innerHTML = '';
+
+  for(var i = 0; i < voices.length; i++) {
+    var option = document.createElement('option');
+    option.textContent = voices[i].name + ' (' + voices[i].lang + ')';
+
+    if(voices[i].default) {
+      option.textContent += ' -- DEFAULT';
+    }
+
+    option.setAttribute('data-lang', voices[i].lang);
+    option.setAttribute('data-name', voices[i].name);
+    voiceSelect.appendChild(option);
+  }
+
+  voiceSelect.selectedIndex = 0;
+}
+
+populateVoiceList();
+if (synth.onvoiceschanged !== undefined) {
+  synth.onvoiceschanged = populateVoiceList;
+}
+
+vol_group.addEventListener('input', () => {
+  let vol_img = document.querySelector('img')
+  vol = document.getElementsByTagName('input')[3].value;
+
+  if (vol > 66) {
+    vol_img.src = "icons/volume-level-3.svg";
+  }
+  else if (vol > 33){
+    vol_img.src = "icons/volume-level-2.svg";
+  }
+  else if (vol > 0) {
+    vol_img.src = "icons/volume-level-1.svg";
+  }
+  else {
+    vol_img.src = "icons/volume-level-0.svg";
+  }
+
+});
+
+
 
 // Fires whenever the img object loads a new image (such as with img.src =)
 img.addEventListener('load', () => {
   // TODO
+
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  form.reset();
+
+  let img_dimen = getDimmensions(canvas.width, canvas.height, img.width, img.height);
+  ctx.drawImage(img, img_dimen.startX, img_dimen.startY, img_dimen.width, img_dimen.height)
+
+  clear.disabled = true;
+  read.disabled = true;
+
 
   // Some helpful tips:
   // - Fill the whole Canvas with black first to add borders on non-square images, then draw on top
   // - Clear the form when a new image is selected
   // - If you draw the image to canvas here, it will update as soon as a new image is selected
 });
+
+// upload image
+img_in.addEventListener('change', () => {
+
+  img.src = URL.createObjectURL(img_in.files[0]);
+  img.alt = img_in.files[0].name;
+  submit.disabled = false;
+});
+
+
+form.addEventListener('submit', (event) => {
+  
+  event.preventDefault();
+
+  clear.disabled = false;
+  read.disabled = false;
+
+  ctx.font = '30px Arial';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.strokeStyle = 'black';
+
+  ctx.fillText(topT.value, canvas.width/2, canvas.height*0.08);
+  ctx.strokeText(topT.value, canvas.width/2, canvas.height*0.08)
+  ctx.fillText(botT.value, canvas.width/2,canvas.height*0.98);
+  ctx.strokeText(botT.value, canvas.width/2,canvas.height*0.98);
+
+  voiceSelect.disabled = false;
+  
+});
+
+clear.addEventListener('click', () => {
+  ctx.clearRect(0,0, canvas.width, canvas.height);
+
+  submit.disabled = false;
+  clear.disabled = true;
+  read.disabled = true; 
+  voiceSelect.disabled = true;
+});
+
+read.addEventListener('click', () => {
+
+  //let sentences = topT.value + botT.value;
+  let top_utterance = new SpeechSynthesisUtterance(topT.value);
+  let bot_utterance = new SpeechSynthesisUtterance(botT.value);
+  var selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-name');
+
+  for(let i = 0; i < voices.length ; i++) {
+    if(voices[i].name === selectedOption) {
+      top_utterance.voice = voices[i];
+      bot_utterance.voice = voices[i];
+    }
+  }
+
+  top_utterance.volume = vol/100;
+  bot_utterance.volume = vol/100;
+  synth.speak(top_utterance);
+  synth.speak(bot_utterance);
+  
+});
+
 
 /**
  * Takes in the dimensions of the canvas and the new image, then calculates the new
