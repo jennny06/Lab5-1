@@ -45,7 +45,7 @@ function populateVoiceList() {
     voiceSelect.appendChild(option);
   }
 
-  voiceSelect.selectedIndex = 0;
+  //voiceSelect.selectedIndex = 0;
 }
 
 populateVoiceList();
