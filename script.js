@@ -139,22 +139,17 @@ clear.addEventListener('click', () => {
 read.addEventListener('click', () => {
 
   //let sentences = topT.value + botT.value;
-  let top_utterance = new SpeechSynthesisUtterance(topT.value);
-  let bot_utterance = new SpeechSynthesisUtterance(botT.value);
+  let utterance = new SpeechSynthesisUtterance(topT.value + ' ' + botT.value);
   var selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-name');
 
   for(let i = 0; i < voices.length ; i++) {
     if(voices[i].name === selectedOption) {
-      top_utterance.voice = voices[i];
-      bot_utterance.voice = voices[i];
+      utterance.voice = voices[i];
     }
   }
 
-  top_utterance.volume = vol/100;
-  bot_utterance.volume = vol/100;
-  synth.speak(top_utterance);
-  synth.speak(bot_utterance);
-  
+  utterance.volume = vol/100;
+  synth.speak(utterance);  
 });
 
 
